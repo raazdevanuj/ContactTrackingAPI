@@ -5,24 +5,59 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"path"
 )
 
-func viewuser(w http.ResponseWriter, r *http.Request) {
-	// articles := Articles{
-	// 	Article{Title: "Hello", Desc: "Article Description", Content: "Article Content"},
-	// }
-	// fmt.Println("Endpoint Hit: all articles end")
-	// json.NewEncoder(w).Encode(articles)
-
-	fmt.Printf("Req: %s %s", r.URL, r.URL.Path)
-
+//users .....
+type Users struct {
+	ID          int    `json:"id"`
+	NAME        string `json:"name"`
+	DateOfBirth string `json:"dateofbirth"`
+	PhoneNumber int32  `json:"phonenumber"`
+	EMAIL       string `json:"email"`
+	Timestamp   string `json:"timestamp"`
 }
-func createusers(w http.ResponseWriter, r *http.Request) {
+
+//contacts...
+type Contacts struct {
+	USERIDONE int    `json:"useridone"`
+	USERIDTWO int    `json:"useridtwo"`
+	Timestamp string `json:"timestamp"`
+}
+type userss []Users
+
+// fmt.Println("Endpoint Hit: all articles end")
+// json.NewEncoder(w).Encode(articles)
+
+func viewuserutil(w http.ResponseWriter, r *http.Request) {
+	//fmt.Printf("Req: %s %s", r.URL, r.URL.Path)
+	var a string = r.URL.Path
+
+	fmt.Println(path.Base(a))
+}
+func createuserutil(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Test Post created")
 }
-
+func viewuser(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		viewuserutil(w, r)
+		w.Write([]byte("Received a GET request\n"))
+	default:
+		w.WriteHeader(http.StatusNotImplemented)
+		w.Write([]byte(http.StatusText(http.StatusNotImplemented)))
+	}
+}
+func createuser(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		createuserutil(w, r)
+		w.Write([]byte("Received a POST request\n"))
+	default:
+		w.WriteHeader(http.StatusNotImplemented)
+		w.Write([]byte(http.StatusText(http.StatusNotImplemented)))
+	}
+}
 func contact(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
@@ -43,19 +78,16 @@ func contact(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotImplemented)
 		w.Write([]byte(http.StatusText(http.StatusNotImplemented)))
 	}
-	fmt.Fprintf(w, "test contact get")
 }
 func homepage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage Endpoint Hit")
 }
 func handleRequests() {
-	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/", homepage)
-	myRouter.HandleFunc("/users", viewuser).Methods("GET")
-	myRouter.HandleFunc("/users", createusers).Methods("POST")
-	myRouter.HandleFunc("/contacts", contact).Methods("GET")
-	myRouter.HandleFunc("/contacts", contact).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8080", myRouter))
+	http.HandleFunc("/", homepage)
+	http.HandleFunc("/users", createuser)
+	http.HandleFunc("/users/", viewuser)
+	http.HandleFunc("/contacts", contact)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 func main() {
 	handleRequests()
