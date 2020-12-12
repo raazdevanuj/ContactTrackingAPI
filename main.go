@@ -146,6 +146,10 @@ func handleRequests() {
 	http.HandleFunc("/users", createuser)
 	http.HandleFunc("/users/", viewuser)
 	http.HandleFunc("/contacts", contact)
+
+	fmt.Println("Serving API on port 8080")
+	fmt.Println("URL for local testing http://localhost:8080")
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 func main() {
