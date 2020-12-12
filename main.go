@@ -20,18 +20,18 @@ import (
 
 //users .....
 type Users struct {
-	ID          int       `json:"id"`
-	NAME        string    `json:"name"`
-	DateOfBirth string    `json:"dateofbirth"`
-	PhoneNumber int32     `json:"phonenumber"`
-	EMAIL       string    `json:"email"`
+	Id          int       `json:"id"`
+	Name        string    `json:"name"`
+	DateOfBirth string    `json:"date_of_birth"`
+	PhoneNumber int32     `json:"phone_number"`
+	Email       string    `json:"email"`
 	Timestamp   time.Time `json:"timestamp"`
 }
 
 //contacts...
 type Contacts struct {
-	USERIDONE int       `json:"useridone"`
-	USERIDTWO int       `json:"useridtwo"`
+	UserIdOne int       `json:"user_id_one"`
+	UserIdTwo int       `json:"user_id_two"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
