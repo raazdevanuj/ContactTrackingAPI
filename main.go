@@ -10,7 +10,6 @@ import (
 	"path"
 	"strconv"
 	"sync"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,21 +17,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//users .....
+// Users ...
 type Users struct {
-	Id          int       `json:"id"`
-	Name        string    `json:"name"`
-	DateOfBirth string    `json:"date_of_birth"`
-	PhoneNumber int32     `json:"phone_number"`
-	Email       string    `json:"email"`
-	Timestamp   time.Time `json:"timestamp"`
+	ID          int64  `json:"_id" bson:"_id,omitempty"`
+	Name        string `json:"name" bson:"name,omitempty"`
+	DateOfBirth string `json:"date_of_birth" bson:"date_of_birth,omitempty"`
+	PhoneNumber string `json:"phone_number" bson:"phone_number,omitempty"`
+	Email       string `json:"email" bson:"email,omitempty"`
+	Timestamp   string `json:"timestamp" bson:"timestamp,omitempty"`
 }
 
-//contacts...
+// Contacts ...
 type Contacts struct {
-	UserIdOne int       `json:"user_id_one"`
-	UserIdTwo int       `json:"user_id_two"`
-	Timestamp time.Time `json:"timestamp"`
+	UserOne   int64  `json:"user_one"`
+	UserTwo   int64  `json:"user_two"`
+	Timestamp string `json:"timestamp"`
 }
 
 var clientInstance *mongo.Client
@@ -41,8 +40,7 @@ var mongoOnce sync.Once
 
 const (
 	CONNECTIONSTRING = "mongodb://localhost:27017"
-	DB               = "db_issue_manager"
-	ISSUES           = "col_issues"
+	DB               = "appointy"
 )
 
 func GetMongoClient() (*mongo.Client, error) {
@@ -70,12 +68,12 @@ json.NewEncoder(w).Encode(articles)*/
 func getbyid(code string) (Users, error) {
 	result := Users{}
 	i, err := strconv.Atoi(code)
-	filter := bson.D{primitive.E{Key: "ID", Value: i}}
+	filter := bson.D{primitive.E{Key: "_id", Value: i}}
 	client, err := GetMongoClient()
 	if err != nil {
 		return result, err
 	}
-	collection := client.Database(DB).Collection(ISSUES)
+	collection := client.Database(DB).Collection("users")
 	err = collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		return result, err
@@ -94,14 +92,11 @@ func viewuserutil(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(user)
 }
-func createuserutil(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Test Post created")
-}
+
 func viewuser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		viewuserutil(w, r)
-		w.Write([]byte("Received a GET request\n"))
 	default:
 		w.WriteHeader(http.StatusNotImplemented)
 		w.Write([]byte(http.StatusText(http.StatusNotImplemented)))
@@ -110,8 +105,40 @@ func viewuser(w http.ResponseWriter, r *http.Request) {
 func createuser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		createuserutil(w, r)
-		w.Write([]byte("Received a POST request\n"))
+		w.Header().Set("Content-Type", "application/json")
+
+		var user Users
+
+		// we decode our body request params
+		_ = json.NewDecoder(r.Body).Decode(&user)
+		client, err := GetMongoClient()
+		if err != nil {
+			return
+		}
+
+		collection := client.Database(DB).Collection("users")
+
+		var lastUser Users
+		findOptions := options.FindOne()
+		findOptions.SetSort(bson.D{{"_id", -1}})
+
+		err2 := collection.FindOne(context.TODO(), bson.D{}, findOptions).Decode(&lastUser)
+		if err2 != nil {
+			user.ID = 1
+		}
+
+		user.ID = lastUser.ID + 1
+		// insert our user model.
+		result, err := collection.InsertOne(context.TODO(), user)
+
+		if err != nil {
+			log.Fatal(result)
+			log.Fatal(err)
+			return
+
+		}
+
+		json.NewEncoder(w).Encode(user)
 	default:
 		w.WriteHeader(http.StatusNotImplemented)
 		w.Write([]byte(http.StatusText(http.StatusNotImplemented)))
